@@ -8,9 +8,6 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.component.dependency.Dependency;
-import com.hypixel.hytale.component.dependency.Order;
-import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.math.vector.Vector3d;
@@ -32,8 +29,6 @@ import com.hypixel.hytale.server.core.modules.entity.component.PositionDataCompo
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerProcessMovementSystem;
-import com.hypixel.hytale.server.core.modules.entity.teleport.PendingTeleport;
-import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -90,7 +85,17 @@ public class AerialFlightSystem extends EntityTickingSystem<EntityStore> {
     public void tick(float deltaSeconds, int startIndex, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
         Player player = (Player)chunk.getComponent(startIndex, this.playerComponentType);
         if (player == null) return;
-        if(this.hasWings(player).equals(1)) {
+        if(this.hasWings(player).equals(0)) {
+            MovementStatesComponent movementStates = (MovementStatesComponent)chunk.getComponent(startIndex, this.movementStatesComponentType);
+            Velocity velocity = (Velocity)chunk.getComponent(startIndex, this.velocityComponentType);
+            PositionDataComponent positionData = (PositionDataComponent)chunk.getComponent(startIndex, this.positionDataComponentType);
+            TransformComponent transform = (TransformComponent)chunk.getComponent(startIndex, this.transformComponentType);
+
+            if (player.getGameMode().equals(GameMode.Adventure)) {
+                if (movementStates.getMovementStates().jumping) {
+                    // flight logic
+                }
+            }
         }
     }
 
@@ -99,8 +104,10 @@ public class AerialFlightSystem extends EntityTickingSystem<EntityStore> {
         ItemContainer armor = inventory.getArmor();
         ItemStack chest = armor.getItemStack((short) 1);
 
-        if (chest.getItemId().equals("Aerial_Wings_T1") || chest.getItemId().equals("Aerial_Wings_T2") || chest.getItemId().equals("Aerial_Wings_T3")) {
-            return 1;
+        if (chest != null) {
+            if (chest.getItemId().equals("Aerial_Wings_T1") || chest.getItemId().equals("Aerial_Wings_T2") || chest.getItemId().equals("Aerial_Wings_T3")) {
+                return 1;
+            }
         }
 
         return 0;

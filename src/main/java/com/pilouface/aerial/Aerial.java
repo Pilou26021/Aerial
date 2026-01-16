@@ -24,7 +24,4 @@ public class Aerial extends JavaPlugin {
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, (event) -> this.movementSystem.handlePlayerReady(event.getPlayer().getUuid()));
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, (event) -> this.movementSystem.handlePlayerDisconnect(event.getPlayerRef().getUuid()));
     }
-
-
-
 }
