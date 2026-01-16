@@ -15,6 +15,7 @@ import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.Color;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.MovementStates;
+import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockMovementSettings;
@@ -24,6 +25,8 @@ import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.io.PacketHandler;
+import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.modules.entity.component.CollisionResultComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.PositionDataComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -37,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.annotation.Nonnull;
 
 
@@ -62,6 +66,17 @@ public class AerialFlightSystem extends EntityTickingSystem<EntityStore> {
         this.collisionResultComponentType = CollisionResultComponent.getComponentType();
         this.positionDataComponentType = PositionDataComponent.getComponentType();
         this.query = Query.and(this.playerComponentType, this.playerRefComponentType, this.transformComponentType, this.velocityComponentType, this.movementStatesComponentType, this.collisionResultComponentType, this.positionDataComponentType);
+
+        // Packet analysis for behavior debugging
+        /*
+        PacketAdapters.registerInbound((PacketHandler handler, Packet packet) -> {
+            String handlerName = handler.getClass().getSimpleName();
+            String packetName = packet.getClass().getSimpleName();
+            if (!"EntityUpdates".equals(packetName) && !"CachedPacket".equals(packetName) && packet.getId() == 108) {
+                LOGGER.at(Level.INFO).log("[" + handlerName + "] Sent packet id=" + packet.getId() + ": " + packetName);
+            }
+        });
+        */
     }
 
     @Nonnull
@@ -91,27 +106,21 @@ public class AerialFlightSystem extends EntityTickingSystem<EntityStore> {
             PositionDataComponent positionData = (PositionDataComponent)chunk.getComponent(startIndex, this.positionDataComponentType);
             TransformComponent transform = (TransformComponent)chunk.getComponent(startIndex, this.transformComponentType);
 
-            if (player.getGameMode().equals(GameMode.Adventure)) {
-                if (movementStates.getMovementStates().jumping) {
+            if (movementStates.getMovementStates().jumping && player.getGameMode().equals(GameMode.Adventure)) {
                     // flight logic
-                }
             }
         }
     }
 
-    public Integer hasWings(@Nonnull Player player) {
+    public Boolean hasWings(@Nonnull Player player) {
         Inventory inventory = player.getInventory();
         ItemContainer armor = inventory.getArmor();
         ItemStack chest = armor.getItemStack((short) 1);
 
-        if (chest != null) {
-            if (chest.getItemId().equals("Aerial_Wings_T1") || chest.getItemId().equals("Aerial_Wings_T2") || chest.getItemId().equals("Aerial_Wings_T3")) {
-                return 1;
-            }
+        if (chest == null) {
+            return false;
         }
-
-        return 0;
-
+        return chest.getItemId().equals("Aerial_Wings_T1") || chest.getItemId().equals("Aerial_Wings_T2") || chest.getItemId().equals("Aerial_Wings_T3");
     }
 
     private static final class PlayerState {
